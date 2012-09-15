@@ -19,7 +19,7 @@ static		CString		strTitle[] = {
 	_T("模拟设置")
 };
 SpMtConnectReq		g_SpMtConn;
-
+SpMtReadReq		g_SpMtRead;
 long	swapWord(long data,int len)
 {
 	long	tmp = 0;
@@ -52,6 +52,17 @@ void	InitCommand()
 	 	g_SpMtConn.SpMtConnect.connect	 = 0x14511451;
 	 	g_SpMtConn.SpMtConnect.CRC			 = 0xffff;
 	 	g_SpMtConn.EndFrame			 = 0x55aa;
+
+		g_SpMtRead.HeaderFrame = 0x5f5f;
+		g_SpMtRead.MsgLen = 0x10;
+		g_SpMtRead.SpMtRead.ReceiverMID = swapWord(SYS_MODULE_SP,4);
+		g_SpMtRead.SpMtRead.SenderMID	= swapWord(SYS_MODULE_MTSW,4);
+		g_SpMtRead.SpMtRead.MsgTYPE		= MAINTAINANCE;
+		g_SpMtRead.SpMtRead.MsgID			= MT_SP_READ_REQ;
+		g_SpMtRead.SpMtRead.MsgLen		= 4;
+		g_SpMtRead.SpMtRead.read			= 0x14511451;
+		g_SpMtRead.SpMtRead.CRC			= 0xffff;
+		g_SpMtRead.EndFrame				= 0x55aa;
 }
 
 
@@ -163,7 +174,7 @@ BOOL CMTSWDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	CRect	rectPage;
+	CRect	rectPage,rectDlg;
 
 	m_pAnalogDlg = new CAnalogSetPage;
 	m_pAnalogDlg->Create(IDD_DLG_ANALOGSET,&m_TabCtrl);
@@ -174,16 +185,23 @@ BOOL CMTSWDlg::OnInitDialog()
 	m_pDigitDlg = new CDigitSetDlg;
 	m_pDigitDlg->Create(IDD_DLG_DIGITSET,&m_TabCtrl);
 
+	//保存整个对话框大小
+	::GetClientRect(m_hWnd,&rectDlg);
+	ScreenToClient(&rectDlg);
+	m_point.X = rectDlg.right - rectDlg.left;
+	m_point.Y = rectDlg.bottom - rectDlg.top;
+
 	m_TabCtrl.GetWindowRect(&rectPage);
 	ScreenToClient(&rectPage);
 	
-	m_point.X = rectPage.right - rectPage.left;
-	m_point.Y = rectPage.bottom - rectPage.top;
 
 	rectPage.left	-= 40;
 	rectPage.top	-= 42;
 	rectPage.right	-= 4;
-	rectPage.bottom	-= 4;
+	rectPage.bottom-= 4;
+
+	m_pointPage.X = rectPage.left - rectPage.right;
+	m_pointPage.Y = rectPage.bottom - rectPage.top;
 
 	m_pAnalogDlg->MoveWindow(&rectPage);
 	m_pCommonDlg->MoveWindow(&rectPage);
@@ -194,7 +212,9 @@ BOOL CMTSWDlg::OnInitDialog()
 	m_TabCtrl.AddPage(m_pAnalogDlg,(LPTSTR)(LPCTSTR)strTitle[2]);
 
 
- 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+	m_pSerial = new CSerial;
+	InitCommand();
+  	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
 void CMTSWDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -248,12 +268,63 @@ HCURSOR CMTSWDlg::OnQueryDragIcon()
 
 
 BOOL	CMTSWDlg::IsConnectRadio()
-{
+{	
+	BYTE	szBuff[0x100];
+	int		nRecChar;
+	m_pSerial->m_nPort = m_nComNum;
+	m_pSerial->m_nPaud = m_nPaud;
+	
+	if (!m_pSerial->IsOpen())
+	{
+		m_pSerial->OpenComm(m_nComNum,m_nPaud,m_nParity);
+	}
+	int i=0,k=0;
+	Sleep(100);
+	for (i=0;i<100;i++)
+	{
+		if(m_pSerial->IsOpen())
+		{
+			for (k=0;k<3;k++)
+			{
+				memcpy(szBuff,&g_SpMtConn,sizeof(SpMtConnectReq));
+				m_pSerial->WriteCommData(szBuff,22,1);
+
+				//此处应返回22字节数据
+				nRecChar = m_pSerial->ReadCommData(szBuff,22,100);
+				if((nRecChar==22) && (szBuff[14]==0x01))
+					break;
+			}
+		}
+		//若是最后依然数据不匹配
+		if((nRecChar==22) && (szBuff[14]==0x01))
+			break;
+		//则关闭后重新尝试每个串口
+		m_pSerial->CloseComm();
+		if (m_pSerial->OpenComm(i,m_nPaud,m_nParity))
+		{
+			m_nComNum = i;
+		}
+		else
+			return FALSE;
+	}
 	return TRUE;
 }
 void CMTSWDlg::OnBnClickedRead()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	BYTE	szBuff[0x1000];
+	int		nRecChar;
+	if (IsConnectRadio())
+	{
+		memcpy(szBuff,&g_SpMtRead,sizeof(SpMtReadReq));
+		m_pSerial->WriteCommData(szBuff,22,1);
+
+		nRecChar = m_pSerial->ReadCommData(szBuff,sizeof(SpMtReadCnf_S)+6,500);
+		if (nRecChar ==)
+		{
+		}
+	}
+	return ;
 }
 
 void CMTSWDlg::OnBnClickedWrite()
@@ -287,18 +358,50 @@ void CMTSWDlg::OnDestroy()
 	// TODO: 在此处添加消息处理程序代码
 }
 
-void	CMTSWDlg::Resize()
+void	CMTSWDlg::ViewResize(LPRECT	lpRect)
 {
+	CRect	rect ;
+	m_TabCtrl.GetItemRect(0,&rect);
+	int	nHeight = rect.Height();//标签页的高度
+	int	nY = rect.bottom;
+	int	nX = rect.left;
+	((CWnd*)m_TabCtrl.GetCurPage())->GetWindowRect(&rect);
+	ScreenToClient(&rect);
+	CPoint OldTLPoint; //左上角
+	CPoint OldBRPoint; //右下角
+#if 0
+	OldTLPoint.x = lpRect->left;
+	OldTLPoint.y = lpRect->top - nHeight;//整个tabctrl控件-标签页高度
+	OldBRPoint.x = lpRect->right;
+	OldBRPoint.y = lpRect->bottom;
+	rect.SetRect(OldTLPoint,OldBRPoint); 
+	rect.OffsetRect(CSize(-lpRect->left,-lpRect->top/2));
+#endif
+
+	OldTLPoint.x = nX;
+	OldTLPoint.y = nY;//lpRect->top - nHeight;//整个tabctrl控件-标签页高度
+	OldBRPoint.x = lpRect->right;
+	OldBRPoint.y = lpRect->bottom;
+	rect.SetRect(OldTLPoint,OldBRPoint); 
+  
+ 	m_pCommonDlg->MoveWindow(&rect,TRUE);
+	m_pAnalogDlg->MoveWindow(&rect,TRUE);
+	m_pDigitDlg->MoveWindow(&rect,TRUE);
+
+  }
+void	CMTSWDlg::Resize()
+{ 
 	float	fsp[2];
 	CRect	rect;
 	Point	NewPoint;
 
-	m_TabCtrl.GetWindowRect(&rect);
+	//m_TabCtrl.
+		GetWindowRect(&rect);
 	NewPoint.X = rect.right - rect.left;
 	NewPoint.Y = rect.bottom - rect.top;
 	
 	fsp[0] = (float)NewPoint.X/m_point.X;
-	fsp[1] = (float)NewPoint.Y/NewPoint.Y;
+	fsp[1] = (float)NewPoint.Y/m_point.Y;
 
 	int		nID;
 	CPoint OldTLPoint,TLPoint; //左上角
@@ -319,18 +422,23 @@ void	CMTSWDlg::Resize()
 		BRPoint.y = long(OldBRPoint.y*fsp[1]);
 
 		rectChild.SetRect(TLPoint,BRPoint);
-		GetDlgItem(nID)->MoveWindow(Rect,TRUE);
+		GetDlgItem(nID)->MoveWindow(rectChild,TRUE);
+		if (nID == IDC_TAB)//when it's tabctrl,we need to resize the views inside the tabctrl
+		{
+			ViewResize(&rectChild);
+		}
 		hwndChild=::GetWindow(hwndChild, GW_HWNDNEXT);   
 	}
+	m_point = NewPoint;
 }
 void CMTSWDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
 
 	// TODO: 在此处添加消息处理程序代码
-	CRect	rect;
-	if(m_TabCtrl)
+ 	if(m_TabCtrl)
 	{
+		Resize();
 	}
 
 }

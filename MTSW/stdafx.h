@@ -49,7 +49,12 @@
 #ifndef _AFX_NO_AFXCMN_SUPPORT
 #include <afxcmn.h>			// MFC 对 Windows 公共控件的支持
 #endif // _AFX_NO_AFXCMN_SUPPORT
-#include "GdiplusTypes.h" 
+// #include "GdiplusTypes.h" 
+
+#pragma		comment(lib,"gdiplus.lib")
+#include <GdiPlus.h>
+using namespace Gdiplus;
+
 #include "MTSW.h"
 #include "MTSWDlg.h"
 #include "AddBox.h"

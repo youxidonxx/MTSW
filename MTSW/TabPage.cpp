@@ -42,6 +42,17 @@ void CTabPage::ShowCurPage(UINT nShowState)
 	GetItem(nCurItem, &itemCur);
 	((CWnd*)itemCur.lParam)->ShowWindow(nShowState);
 }
+CWnd*	CTabPage::GetCurPage()
+{
+	int		nCurItem;
+	TCITEM	itemCur;
+
+	nCurItem		= GetCurSel();
+	itemCur.mask	= TCIF_PARAM;
+
+	GetItem(nCurItem, &itemCur);
+	return	((CWnd*)itemCur.lParam);
+}
 
 BEGIN_MESSAGE_MAP(CTabPage, CTabCtrl)
 	ON_NOTIFY_REFLECT(TCN_SELCHANGING, &CTabPage::OnTcnSelchanging)

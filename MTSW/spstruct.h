@@ -973,7 +973,13 @@ typedef		struct
 	SpMtConnect_S	SpMtConnect;
 	uint16	EndFrame;
 }SpMtConnectReq;
-
+typedef		struct	
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	SpMtRead_S	SpMtRead;
+	uint16	EndFrame;
+}SpMtReadReq;
 /*******************************************************************************
                 Function Declarations
 *******************************************************************************/

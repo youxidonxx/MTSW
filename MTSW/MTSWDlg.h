@@ -32,7 +32,8 @@ protected:
 	char	m_nParity;	//'N'
 	int		m_nComNum;//串口号
 	LONG32	m_nPaud;	//波特率
-	Point	m_point;
+	Point	m_point;	//for dlg
+	Point	m_pointPage;	//for tabctrl view
 	CSerial*	m_pSerial;
 
 	CCommonSetDlg*		m_pCommonDlg;
@@ -43,7 +44,7 @@ protected:
 	BYTE*	m_DigitData;	//数字部分
 	BYTE*	m_AnalogData;	//模拟校准数据
 
-
+	void	ViewResize(LPRECT	lpRect)  ;
 	void	Resize();
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
