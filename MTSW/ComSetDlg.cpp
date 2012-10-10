@@ -105,7 +105,7 @@ void CComSetDlg::OnBnClickedOk()
 	int nSel = m_cbComSet.GetCurSel();
 	CString		str;
 	m_cbComSet.GetLBText(nSel,str);
-	str = str.Right(wcslen(str)-3);
+	str = str.Right(_tcslen(str)-3);
 	m_nPortNum = _ttoi(str);
 	OnOK();
  }

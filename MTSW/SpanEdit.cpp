@@ -49,7 +49,7 @@ int CSpanEdit::DeltaDecimal(int step)
 	double f;
 	CString str;
 	GetWindowText(str);
-	f=wcstod(str,NULL)+m_nDelta/2.0;
+	f=_tcstod(str,NULL)+m_nDelta/2.0;
 		//atof(str)*10+m_nDelta/2.0;
  	if(step>0)
 	{
@@ -132,7 +132,7 @@ int CSpanEdit::DeltaInteger(int step)
 	double f;
 	CString str;
 	GetWindowText(str);
-	f=wcstod(str,NULL);
+	f=_tcstod(str,NULL);
 		//atof(str);	//+m_nDelta/2.0;
 
 	if(step>0)

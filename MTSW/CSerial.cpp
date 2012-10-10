@@ -26,6 +26,13 @@ BOOL	CSerial::OpenComm(int nPort,LONG32 nPaud,char parity /* =  */,
 	CString		strComm;
 	memset(&tous,0,sizeof(tous));
 	tous.ReadIntervalTimeout = MAXWORD;
+	tous.ReadTotalTimeoutMultiplier       =       1000       ;   
+
+	tous.ReadTotalTimeoutConstant       =       1000       ;   
+
+	tous.WriteTotalTimeoutMultiplier       =       1000;   
+
+	tous.WriteTotalTimeoutConstant       =       1000       ;   
 
 	if (nPort >=10)
 	{
@@ -34,7 +41,8 @@ BOOL	CSerial::OpenComm(int nPort,LONG32 nPaud,char parity /* =  */,
 	else
 		strComm.Format(_T("COM%d"),nPort);
 
-	m_hComm = CreateFile(strComm,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	m_hComm = CreateFile(strComm,GENERIC_READ|GENERIC_WRITE,0,
+		NULL,OPEN_EXISTING,0,NULL);
 	if (m_hComm!=INVALID_HANDLE_VALUE)
 	{
 		GetCommState(m_hComm,&dcb);
@@ -48,12 +56,16 @@ BOOL	CSerial::OpenComm(int nPort,LONG32 nPaud,char parity /* =  */,
 		dcb.ByteSize = databits;
 		dcb.StopBits = stopbits;
 
+		dcb.XonLim = 512;
+		dcb.XoffLim = 1;
+
 		SetCommState(m_hComm,&dcb);
-		SetupComm(m_hComm,4096,4096);
+		SetupComm(m_hComm,2048,2048);
 		SetCommTimeouts(m_hComm,&tous);
 		EscapeCommFunction(m_hComm,SETDTR);
 		EscapeCommFunction(m_hComm,SETRTS);		
 
+		PurgeComm(m_hComm, PURGE_RXCLEAR | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_TXABORT);
 		m_nPaud = nPaud;
 		m_nPort = nPort;
 		return TRUE;
@@ -64,12 +76,31 @@ int CSerial::WriteComm(BYTE ch,int delay)
 {
 	return(WriteCommData(&ch,1,delay));
 }
+DWORD	CSerial::Write(const void* lpBuf,DWORD dwCount)
+{
+	if(!IsOpen())
+		return -1;
+	COMSTAT	stat;
+	DWORD	dwError;
+	ClearCommError(m_hComm,&dwError,&stat);
 
+	DWORD dwBytesWritten = 0;
+	if (!WriteFile(m_hComm, lpBuf, dwCount, &dwBytesWritten,NULL))
+	{
+		DWORD err = ::GetLastError();
+		TRACE(_T("CSerialPort::Write, Failed in call to WriteFile,Error code:%d\n",err));
+		return -1;
+	}
+	return	dwBytesWritten;
+}
 int CSerial::WriteCommData(BYTE* buff,int len,int delay /* = 1 */,int flag /* = 0 */)
 {
 	int i=0;
 	unsigned long number = 0;
-	if (flag == 0)
+	COMSTAT	stat;
+	DWORD	dwError;
+	ClearCommError(m_hComm,&dwError,&stat);
+ 	if (flag == 0)
 	{
 		if(delay!=0)
 			Sleep(delay);
@@ -101,7 +132,7 @@ int CSerial::ReadCommData(BYTE* buff,int len,int timeout)
 	int i=0;
 	unsigned long number = 0;
 	start = GetTickCount();
-	do 
+ 	do 
 	{
 		//Çå³ýCOMM±êÖ¾
 		int err = GetLastError();
@@ -127,8 +158,11 @@ int CSerial::ReadCommData(int timeout)
 	COMSTAT	stat;
 	DWORD	dwError;
 	unsigned long	number = 0;
+// 	COMSTAT	stat;
+// 	DWORD	dwError;
+// 	ClearCommError(m_hComm,&dwError,&stat);
 	start = GetTickCount();
-	do 
+ 	do 
 	{
 		int err = GetLastError();
 
@@ -140,6 +174,21 @@ int CSerial::ReadCommData(int timeout)
 			return (int)ch;
 	} while (GetTickCount()-start <(unsigned int)timeout);
 	return -1;
+}
+DWORD	CSerial::Read(void* lpBuf,DWORD dwCount)
+{
+	if(!IsOpen())
+		return -1;
+	DWORD dwBytesRead = 0;
+	COMSTAT	stat;
+	DWORD	dwError;
+	ClearCommError(m_hComm,&dwError,&stat);
+	if (!ReadFile(m_hComm, lpBuf, dwCount, &dwBytesRead, NULL))
+	{
+		TRACE(_T("CSerialPort::Read, Failed in call to ReadFile\n"));
+		return -1;
+	}
+	return dwBytesRead;
 }
 void CSerial::CloseComm()
 {

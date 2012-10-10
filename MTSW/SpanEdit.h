@@ -37,7 +37,7 @@ public:
 
 // Implementation
 public:
-	void FreqLimitInput();
+	void	FreqLimitInput();
 	void	SetSpecialValue(int value,CString& str);
 	void	SetDecimal(int value,BOOL special = FALSE);
 	void	SetRange(int min,int max,int nLimit=0,int delta=1,int bSpan=TRUE);

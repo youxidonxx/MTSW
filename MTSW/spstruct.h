@@ -146,16 +146,6 @@ typedef   struct
     uint16          CRC;                 /*CRC*/
 } SchInitReq_S;
 
-/*SP_SCH_POWEROFF_REQ---null msg*/
-typedef struct
-{
-    uint16         ReceiverMID;         /*Receiver MID*/
-    uint16         SenderMID;           /*Sender MID*/
-    uint16         MsgTYPE;             /*Msg Type*/
-    uint16         MsgID;               /*Msg MID*/
-    uint16         MsgLen;              /*Msg Length*/
-    uint16         CRC;                 /*CRC*/
-} SchPowoff_S;
 
 /*SP_SCH_AUDIO_REQ*/
 typedef   struct
@@ -483,7 +473,7 @@ typedef   struct
     uint16         operate;
     uint16         volgain;
     uint16         CRC;
-} SpMtMaxvol_S;
+}SpMtMaxvol_S ;
 
 
 /*SP_MT_READ_CNF*/
@@ -960,12 +950,6 @@ typedef   struct
     uint16         prembllen;
 } SysGlbReq_S;
 
-typedef		struct	 tagSpMsg
-{
-	uint16		Head;
-	uint16		MsgLen;
-	uint16		End;
-}SpMsg;
 typedef		struct	 
 {
 	uint16	HeaderFrame;
@@ -980,6 +964,180 @@ typedef		struct
 	SpMtRead_S	SpMtRead;
 	uint16	EndFrame;
 }SpMtReadReq;
+
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	SpMtEffect_S	SpMtEffect;
+	uint16	EndFrame;
+}SpMtEffectReq;
+
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	SpMtMaxvol_S	SpMtMaxvol;
+	uint16	EndFrame;
+}SpMtMaxvolReq;
+/*MT_SCH_ANA_TXCAL_REQ*/
+typedef		struct
+{
+	uint16					HeaderFrame;
+	uint16					MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint32				   txananum;
+	uint16               PC;
+	uint16               Interval;	//信道间隔
+	uint16               SigType;	//模拟信令类型
+	uint32               SigNum;		//模拟信令号码
+	uint16               MOD1;		//
+	uint16               MOD2;		//
+ 	uint16               CRC;
+	uint16               EndFrame;
+}MtSchAnaTXCalReq;
+
+/*MT_SCH_ANA_TXCAL_REQ*/
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint16               CRC;
+	uint16               EndFrame;
+}MtSchAnaTXCalStop;
+
+/*MT_SCH_ANA_RXCAL_REQ*/
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint32				   txananum;
+	uint16               TV;
+	uint16               CRC;
+	uint16               EndFrame;
+}MtSchAnaRXCalReq;
+
+/*MT_SCH_ANA_RXCAL_STOP*/
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint16               CRC;
+	uint16               EndFrame;
+}MtSchCalStop;
+
+/*MT_SCH_DIG_TXCAL_REQ */
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint32				   txananum;	//发射频率
+	uint16               PC;			//低功率时的校准值
+	uint16               Interval;
+	uint16               MOD1;		//频偏
+	uint16               MOD2;		//平衡
+	uint16               CRC;
+	uint16               EndFrame;
+}MtSchDitTXCalReq;
+
+
+/*MT_SCH_DIG_RXCAL_REQ */
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint32				   txananum;
+	uint16               TV;
+	uint16               Interval;
+	uint16               Period;
+	uint16               CRC;
+	uint16               EndFrame;
+}SpSchDitRXCalReq;
+/*SCH_MT_DIG_RXCAL_RSP */
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint32				   txananum;
+	uint16               TV;
+	uint16               TotalBitNum;
+	uint16               ErrorBitNum;
+	uint16               CRC;
+	uint16               EndFrame;
+}SpSchDitRXCalRsp;
+
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	SpMtAd_S	SpMtAd;
+	uint16               EndFrame;
+}SpMtAdReq;
+
+/*MT_SCH_ANA_FREQCAL_REQ*/
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint32				   txananum;
+	uint16               VCCN;
+	uint16               CRC;
+	uint16               EndFrame;
+}MtSchAnaFreqCalReq;
+
+/*MT_SCH_ANA_FREQCAL_STOP */
+typedef		struct
+{
+	uint16	HeaderFrame;
+	uint16	MsgLen;
+	uint16               ReceiverMID;
+	uint16               SenderMID;
+	uint16               MsgTYPE;
+	uint16               MsgID;
+	uint16               MsgContLen;
+	uint16               CRC;
+	uint16               EndFrame;
+}MtSchAnaFreqCalStop;
+
 /*******************************************************************************
                 Function Declarations
 *******************************************************************************/

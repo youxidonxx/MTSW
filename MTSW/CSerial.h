@@ -22,9 +22,11 @@ public:
 	int		ReadCommData(BYTE*	buff,int len,int timeout);
 	int		ReadCommData(int  timeout);
 
+	DWORD	Read(void*	lpBuf,DWORD	dwCount);
+	DWORD	Write(const	void*	lpBuf,DWORD	dwCount);
 	int		m_nPort;
 	int		m_nPaud;
-private:
+ private:
 	//int		m_hComm;
 	HANDLE	m_hComm;
 };

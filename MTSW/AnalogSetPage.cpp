@@ -31,3 +31,8 @@ END_MESSAGE_MAP()
 
 
 // CAnalogSetPage 消息处理程序
+void	CAnalogSetPage::LoadData()
+{
+	m_pOwner = GetOwner();
+	m_pData = ((CMTSWDlg*)((CTabCtrl*)m_pOwner->GetOwner()))->GetCommonDataPtr();
+}

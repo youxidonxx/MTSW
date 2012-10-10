@@ -7,10 +7,15 @@ class CAnalogSetPage : public CDialog
 {
 	DECLARE_DYNAMIC(CAnalogSetPage)
 
+protected:
+	BYTE*	m_pData;
+	CWnd*	m_pOwner;
 public:
 	CAnalogSetPage(CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CAnalogSetPage();
 
+
+	void	LoadData();
 // 对话框数据
 	enum { IDD = IDD_DLG_ANALOGSET };
 
